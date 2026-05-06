@@ -99,7 +99,7 @@ def get_product_stock(product_name: str, db: Session = Depends(get_db)):
     if not product:
         raise HTTPException(status_code=404, detail="해당 상품을 찾을 수 없습니다.")
     return {"product_name": product.name, 
-            "remaining_stock": product.stock
+            "remaining_stock": product.stock,
             "barcode_data": product.barcode_data}
 
 # 2. 바코드 숫자 정보 전송 및 ROS2 스캔 신호
