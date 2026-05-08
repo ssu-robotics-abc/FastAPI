@@ -1,0 +1,11 @@
+[project]
+name = "robotics-abc-dashboard"
+version = "0.0.1"
+description = "A web dashboard for the Robotics ABC project"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "fastapi[standard]>=0.136.1",
+    "pydantic>=2.13.4",
+    "sqlalchemy>=2.0.49",
+]

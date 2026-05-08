@@ -1,9 +1,56 @@
-### 서버 실행: python3 -m uvicorn main:app --reload --host 0.0.0.0 
-##### pip install fastapi uvicorn sqlalchemy pydantic
+# 개발 환경 설정 및 서버 실행
 
-##### hostname -I
+> [!NOTE]  
+> 이 문서는 FastAPI 백엔드 서버의 엔드포인트 기능과 사용법을 설명합니다. 본 서버는 제품의 재고 관리, 바코드 인식 결과 처리, 그리고 최종 구매(결제) 프로세스를 담당하며 추후 ROS 2 로봇 제어 노드와 통합됩니다.
 
-이 문서는 FastAPI 백엔드 서버의 엔드포인트 기능과 사용법을 설명합니다. 본 서버는 제품의 재고 관리, 바코드 인식 결과 처리, 그리고 최종 구매(결제) 프로세스를 담당하며 추후 ROS 2 로봇 제어 노드와 통합됩니다.
+
+## 1. 개발 환경 설정
+
+본 프로젝트는 `uv` 기반 Python 프로젝트로 uv가 설치되어있지 않다면, 아래 링크를 통해 설치해주시기 바랍니다
+> https://docs.astral.sh/uv/getting-started/installation/
+
+
+### python version
+`.python-version` 파일에 정의된 Python 버전을 사용합니다.
+```bash
+uv python install
+```
+
+### 의존성 라이브러리 설치
+
+`pyproject.toml`과 `uv.lock`을 기준으로 프로젝트 의존성을 설치합니다.
+
+```bash
+uv sync
+```
+
+
+
+---  
+
+  
+
+## 2. 서버 실행
+
+FastAPI 개발 서버를 실행합니다.
+
+```bash
+fastapi dev --host 0.0.0.0 --port 8000
+```
+
+
+실행 후 브라우저에서 API 문서를 확인할 수 있습니다.
+
+```text
+http://localhost:8000/docs
+```
+
+
+같은 네트워크의 다른 기기에서 접속해야 하는 경우 서버 PC의 IP를 확인합니다.
+
+```bash
+hostname -I
+```
 
 ---
 
@@ -102,5 +149,5 @@
     ```
 
 ---
-* 문서 버전: v1.4
+* 문서 버전: v1.4.1
 * 통합 상태: ROS 2 통신 로직 뼈대 포함 (상품 스캔, 구매 완료, 구매자 QR 스캔)
