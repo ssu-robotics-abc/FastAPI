@@ -34,12 +34,10 @@ uv sync
 
 ## 2. 데이터베이스 초기화
 
-본 프로젝트는 SQLAlchemy 기반으로 DB를 사용하며, DB 스키마 관리는 Alembic을 통해 수행합니다.
-
-### 테이블 생성
+본 프로젝트는 SQLAlchemy 기반으로 DB를 사용하며, 앱 시작 시 테이블을 자동 생성합니다.
 
 ```bash
-uv run alembic upgrade head
+uv run python scripts/init_db.py
 ```
 
 ### 초기 상품 데이터 삽입
@@ -257,6 +255,100 @@ DB에 등록되지 않은 바코드일 경우 에러를 반환합니다.
 {
   "customer_name": "홍길동"
 }
+```
+
+---
+
+# 코드 기여 가이드
+
+이 저장소의 코드 기여 흐름은 위키의 안내를 따릅니다.
+
+## 1. 최신 `main` 브랜치로 시작
+
+작업 전에 로컬 `main`을 최신 상태로 맞춥니다.
+
+```bash
+git switch main
+git pull origin main
+```
+
+## 2. 새 브랜치 생성
+
+브랜치 이름은 `작업유형/작업-이름` 형식으로 작성합니다.
+
+예시:
+
+```bash
+git switch -c feat/remove-alembic
+git switch -c fix/seed-db-import-path
+git switch -c docs/update-readme
+```
+
+## 3. 코드 수정 후 변경 확인
+
+수정 후에는 변경 범위를 먼저 확인합니다.
+
+```bash
+git status
+git diff
+```
+
+## 4. 커밋 작성
+
+커밋 메시지는 `작업유형: 작업 내용` 형식을 권장합니다.
+
+예시:
+
+```bash
+git add README.md app/main.py app/db/init_db.py scripts/init_db.py scripts/seed_db.py
+git commit -m "docs: update database setup and contribution guide"
+```
+
+권장 작업 유형:
+
+```text
+feat: 새로운 기능 추가
+fix: 버그 수정
+docs: 문서 수정
+chore: 설정, 빌드, 패키지 관리 등 기능 변경이 아닌 작업
+```
+
+## 5. 원격 저장소로 Push
+
+처음 푸시하는 브랜치라면 `-u` 옵션을 사용합니다.
+
+```bash
+git push -u origin feat/remove-alembic
+```
+
+## 6. Pull Request 생성
+
+GitHub에서 방금 푸시한 브랜치로 PR을 생성합니다. PR 제목은 커밋 메시지와 비슷하게 작성합니다.
+
+PR 설명 예시:
+
+```md
+## 작업 내용
+- Alembic 의존 제거
+- SQLAlchemy create_all 기반 DB 초기화 추가
+- README에 기여 가이드 반영
+
+## 테스트 내용
+- `uv run python scripts/init_db.py`
+- `uv run python scripts/seed_db.py`
+
+## 참고 사항
+- 앱 시작 시 테이블이 자동 생성됩니다.
+- 초기 데이터는 seed 스크립트로 입력합니다.
+```
+
+## 7. 리뷰 및 머지
+
+최소 한 명의 리뷰 후 머지합니다. PR 머지 전에는 앱과 관련 스크립트가 정상 동작하는지 다시 확인합니다.
+
+```bash
+uv run python scripts/init_db.py
+uv run python scripts/seed_db.py
 ```
 
 ### Response

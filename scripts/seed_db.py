@@ -1,6 +1,15 @@
+from pathlib import Path
+import sys
+
 from sqlalchemy.orm import Session
 
+
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
+if str(PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(PROJECT_ROOT))
+
 from app.crud.product import create_product, get_product_by_barcode
+from app.db.init_db import initialize_database
 from app.db.session import SessionLocal
 
 
@@ -24,6 +33,8 @@ def seed_products(db: Session) -> None:
 
 
 def main() -> None:
+    initialize_database()
+
     db = SessionLocal()
     try:
         seed_products(db)
