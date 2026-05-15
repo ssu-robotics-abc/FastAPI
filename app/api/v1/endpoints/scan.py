@@ -20,7 +20,7 @@ def process_barcode_scan(
     if product is None:
         raise HTTPException(status_code=404, detail="등록되지 않은 바코드입니다.")
 
-    ros2_service.publish_scan_event(product.name)
+    ros2_service.publish_scan_event(request.barcode_data)
 
     return ScanResponse(
         product_name=product.name,
