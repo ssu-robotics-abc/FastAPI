@@ -1,6 +1,8 @@
+import json
+
 import rclpy
 from rclpy.node import Node
-from std_msgs.msg import String 
+from std_msgs.msg import String
 
 class ROS2Service:
     def __init__(self):
@@ -14,8 +16,13 @@ class ROS2Service:
         # FastAPI용 ROS 2 노드 생성
         self.node = Node('fastapi_barcode_bridge')
         
-        # 'scan_done' 토픽으로 Int32 타입 메시지를 보내는 Publisher 생성
+        # FastAPI에서 ROS 2 쪽으로 문자열 메시지를 보내는 Publisher 생성
         self.scan_publisher = self.node.create_publisher(String, 'scan_done', 10)
+        self.pick_request_publisher = self.node.create_publisher(
+            String,
+            'pick_request',
+            10,
+        )
         
         print("✅ [ROS2] Bridge Node 및 'scan_done' Publisher가 생성되었습니다.")
 
@@ -30,6 +37,14 @@ class ROS2Service:
         self.scan_publisher.publish(msg)
         
         print(f"🚀 [ROS2] Topic 'scan_done'에 product_id={product_id} 발행 완료")
+
+    def publish_pick_request(self, items: dict[str, int]) -> None:
+        msg = String()
+        msg.data = json.dumps({"items": items}, ensure_ascii=False)
+
+        self.pick_request_publisher.publish(msg)
+
+        print(f"🚀 [ROS2] Topic 'pick_request'에 items={items} 발행 완료")
 
     def publish_purchase_complete(self, order_id: int, items: dict[str, int]) -> None:
         # 필요 시 Int32나 String 등으로 구현 가능

@@ -22,6 +22,8 @@ class Order(Base):
         nullable=False,
     )
     customer_name: Mapped[str] = mapped_column(String, nullable=False)
+    total_amount: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    payment_status: Mapped[str] = mapped_column(String, nullable=False, default="paid")
 
     items: Mapped[list["OrderItem"]] = relationship(
         back_populates="order",
