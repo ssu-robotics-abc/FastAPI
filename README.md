@@ -95,6 +95,7 @@ http://<서버_IP>:8000/docs
 ```text
 /api/v1/stock/{product_name}
 /api/v1/scan
+/api/v1/purchase/validate
 /api/v1/purchase
 /api/v1/qr_scan_complete
 ```
@@ -178,20 +179,21 @@ DB에 등록되지 않은 바코드일 경우 에러를 반환합니다.
 
 ---
 
-## 3. 구매 처리 및 로봇 동작 명령
+## 3. VLM 구매 예정 품목 검증 및 로봇 집기 요청
 
-**`POST` `/api/v1/purchase`**
+**`POST` `/api/v1/purchase/validate`**
 
-구매자가 최종 결제를 확정했을 때 호출합니다.
+VLM이 구매 예정 품목 묶음을 확정했을 때 호출합니다.
 
-장바구니에 담긴 여러 상품의 수량을 한 번에 전송받아 다음 작업을 수행합니다.
+여러 상품의 수량을 한 번에 전송받아 다음 작업을 수행합니다.
 
 1. 요청 상품 존재 여부 확인
 2. 재고 수량 검증
-3. 주문 내역 생성
-4. 주문 상품 생성
-5. 상품 재고 차감
-6. ROS 2 시스템에 구매 완료 및 로봇 동작 신호 전달
+3. 구매 예정 총액 계산
+4. ROS 2 시스템에 로봇 집기 요청 전송
+
+이 단계에서는 아직 결제가 완료되지 않았으므로 주문 내역을 생성하지 않고, 상품 재고도 차감하지 않습니다.
+검증을 통과한 품목 묶음은 서버의 결제 대기 상태에 보관되며, 이후 QR 결제 시 이 품목으로 구매 내역을 저장합니다.
 
 ### Request Body
 
@@ -199,7 +201,6 @@ DB에 등록되지 않은 바코드일 경우 에러를 반환합니다.
 
 ```json
 {
-  "customer_name": "홍길동",
   "items": {
     "칸초": 1,
     "펩시": 2
@@ -214,8 +215,12 @@ DB에 등록되지 않은 바코드일 경우 에러를 반환합니다.
 ```json
 {
   "status": "success",
-  "order_id": 1,
-  "message": "구매 처리가 완료되었습니다. (구매자: 홍길동)"
+  "total_amount": 3900,
+  "items": {
+    "칸초": 1,
+    "펩시": 2
+  },
+  "message": "상품 재고 검증이 완료되어 로봇 집기 요청이 전송되었습니다."
 }
 ```
 
@@ -231,7 +236,7 @@ DB에 등록되지 않은 바코드일 경우 에러를 반환합니다.
 
 #### Error - 404 Not Found
 
-존재하지 않는 상품이 요청 목록에 포함된 경우 에러를 반환하고 트랜잭션을 취소합니다.
+존재하지 않는 상품이 요청 목록에 포함된 경우 에러를 반환합니다.
 
 ```json
 {
@@ -241,19 +246,33 @@ DB에 등록되지 않은 바코드일 경우 에러를 반환합니다.
 
 ---
 
-## 4. 사용자 QR 스캔 완료 신호 전송
+## 4. QR 결제 및 구매 처리
 
 **`POST` `/api/v1/qr_scan_complete`**
 
 앱에서 구매자 정보가 담긴 QR 코드 인식이 완료되었을 때 호출합니다.
 
-별도의 DB 처리는 수행하지 않고, 특정 사용자가 QR 스캔을 완료했다는 신호를 ROS 2 시스템으로 전달합니다.
+로봇이 상품을 모두 가져온 뒤 QR을 찍는 시점에 호출합니다.
+서버는 직전에 VLM 검증을 통과한 결제 대기 품목을 다시 최종 검증한 뒤 주문 내역을 생성하고 재고를 차감합니다.
 
 ### Request Body
 
 ```json
 {
   "customer_name": "홍길동"
+}
+```
+
+### Response
+
+#### Success - 200 OK
+
+```json
+{
+  "status": "success",
+  "order_id": 1,
+  "total_amount": 3900,
+  "message": "QR 결제 및 구매 처리가 완료되었습니다. (구매자: 홍길동)"
 }
 ```
 
@@ -351,19 +370,6 @@ uv run python scripts/init_db.py
 uv run python scripts/seed_db.py
 ```
 
-### Response
-
-#### Success - 200 OK
-
-```json
-{
-  "status": "success",
-  "message": "[홍길동]님의 QR 스캔 완료 신호가 ROS 2로 전송되었습니다."
-}
-```
-
----
-
 ## 5. 예시 요청
 
 ### 상품 재고 조회
@@ -380,13 +386,12 @@ curl -X POST http://localhost:8000/api/v1/scan \
   -d '{"barcode_data": "8801062518210"}'
 ```
 
-### 구매 처리
+### VLM 구매 예정 품목 검증 및 로봇 집기 요청
 
 ```bash
-curl -X POST http://localhost:8000/api/v1/purchase \
+curl -X POST http://localhost:8000/api/v1/purchase/validate \
   -H "Content-Type: application/json" \
   -d '{
-    "customer_name": "홍길동",
     "items": {
       "칸초": 1,
       "펩시": 2
