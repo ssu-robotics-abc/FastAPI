@@ -3,7 +3,7 @@ name = "robotics-abc-dashboard"
 version = "0.0.1"
 description = "A web dashboard for the Robotics ABC project"
 readme = "README.md"
-requires-python = ">=3.10"
+requires-python = ">=3.12"
 dependencies = [
     "fastapi[standard]>=0.136.1",
     "pydantic>=2.13.4",
