@@ -1,14 +1,18 @@
 import json
+import threading
 
 try:
     import rclpy
     from rclpy.node import Node
     from std_msgs.msg import String
-    from abc_interfaces.srv import SttStart
 except ModuleNotFoundError:
     rclpy = None
     Node = None
     String = None
+
+try:
+    from abc_interfaces.srv import SttStart
+except ModuleNotFoundError:
     SttStart = None
 
 
@@ -35,9 +39,13 @@ class ROS2Service:
         self.node = Node('fastapi_barcode_bridge')
         self.scan_publisher = self.node.create_publisher(String, 'scan_done', 10)
         self.pick_request_publisher = self.node.create_publisher(String, 'pick_request', 10)
-        self.stt_start_client = self.node.create_client(SttStart, '/stt_start')
+        self.stt_start_client = self.node.create_client(SttStart, '/stt_start') if SttStart else None
 
-        print("✅ [ROS2] Bridge Node 및 Publisher가 생성되었습니다.")
+        # 백그라운드 spin — subscriber matching 및 서비스 응답 처리를 위해 필요
+        self._spin_thread = threading.Thread(target=rclpy.spin, args=(self.node,), daemon=True)
+        self._spin_thread.start()
+
+        print("✅ [ROS2] Bridge Node, Publisher, 백그라운드 Spin이 시작되었습니다.")
 
     def publish_scan_event(self, product_id: str) -> None:
         if not self.enabled:
@@ -66,7 +74,7 @@ class ROS2Service:
         print(f"[ROS2] QR scan completed: customer_name={customer_name}")
 
     def start_stt(self, timeout_sec: float = 3.0) -> bool:
-        if not self.enabled:
+        if not self.enabled or self.stt_start_client is None:
             print("[ROS2 disabled] stt_start: start=True")
             return False
 
@@ -77,12 +85,12 @@ class ROS2Service:
         request = SttStart.Request()
         request.start = True
 
+        # 백그라운드 spin이 이미 돌고 있으므로 future.result()를 polling으로 대기
         future = self.stt_start_client.call_async(request)
-        rclpy.spin_until_future_complete(
-            self.node,
-            future,
-            timeout_sec=timeout_sec,
-        )
+        import time
+        deadline = time.time() + timeout_sec
+        while not future.done() and time.time() < deadline:
+            time.sleep(0.05)
 
         if not future.done():
             print("⚠️ [ROS2] Service '/stt_start' 응답 시간 초과")
