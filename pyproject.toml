@@ -3,7 +3,8 @@ name = "robotics-abc-dashboard"
 version = "0.0.1"
 description = "A web dashboard for the Robotics ABC project"
 readme = "README.md"
-requires-python = ">=3.12"
+# ROS 2 Humble의 rclpy는 시스템 Python 3.10에만 빌드되어 있어 3.10으로 고정합니다.
+requires-python = ">=3.10,<3.11"
 dependencies = [
     "fastapi[standard]>=0.136.1",
     "pydantic>=2.13.4",
@@ -11,7 +12,6 @@ dependencies = [
     "sqlalchemy>=2.0.49",
 ]
 
-[tool.uv.workspace]
-members = [
-    "venv",
-]
+[tool.uv]
+# rclpy C확장 ABI 호환을 위해 uv 관리 파이썬이 아닌 시스템 /usr/bin/python3.10 을 사용합니다.
+python-preference = "only-system"
