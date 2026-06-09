@@ -45,6 +45,10 @@ def create_product(
     return product
 
 
+def set_stock(product: Product, stock: int) -> None:
+    product.stock = stock
+
+
 def decrease_stock(product: Product, quantity: int) -> None:
     product.stock -= quantity
 

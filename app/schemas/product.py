@@ -1,6 +1,6 @@
 from typing import Any
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class ProductBase(BaseModel):
@@ -45,6 +45,10 @@ class ProductDisplayRead(ProductRead):
             rating_count=product.rating_count,
             category=product.category,
         )
+
+
+class ProductStockUpdate(BaseModel):
+    stock: int = Field(ge=0)
 
 
 class StockResponse(BaseModel):

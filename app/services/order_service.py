@@ -1,8 +1,9 @@
 from fastapi import HTTPException
+from sqlalchemy import update
 from sqlalchemy.orm import Session
 
 from app.crud.order import create_order, create_order_item
-from app.crud.product import decrease_stock, get_product_by_name
+from app.crud.product import get_product_by_name
 from app.models.order import Order
 from app.models.product import Product
 
@@ -67,29 +68,49 @@ def process_purchase_transaction(
 ) -> Order:
     """구매 처리 트랜잭션입니다.
 
-    모든 상품 존재 여부와 재고를 먼저 검증한 뒤,
-    주문 생성, 주문 아이템 생성, 재고 차감을 한 번에 처리합니다.
+    모든 상품 존재 여부와 현재 재고를 확인한 뒤, 재고 차감은 조건부
+    UPDATE로 처리합니다. 여러 키오스크가 동시에 주문해도 stock >= quantity
+    조건을 통과한 요청만 차감되며, 실패하면 주문 전체를 롤백합니다.
     """
 
     products, total_amount = validate_purchase_items(db, items=items)
 
-    order = create_order(
-        db,
-        customer_name=customer_name,
-        total_amount=total_amount,
-    )
-
-    for product_name, quantity in items.items():
-        product = products[product_name]
-        decrease_stock(product, quantity)
-        create_order_item(
+    try:
+        order = create_order(
             db,
-            order_id=order.id,
-            product_id=product.id,
-            quantity=quantity,
+            customer_name=customer_name,
+            total_amount=total_amount,
         )
 
-    db.commit()
-    db.refresh(order)
+        for product_name, quantity in items.items():
+            product = products[product_name]
+            result = db.execute(
+                update(Product)
+                .where(Product.id == product.id, Product.stock >= quantity)
+                .values(stock=Product.stock - quantity)
+            )
+            if result.rowcount != 1:
+                db.rollback()
+                current_product = get_product_by_name(db, product_name)
+                current_stock = current_product.stock if current_product else 0
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"'{product_name}' 재고가 부족합니다. (현재: {current_stock}개)",
+                )
+
+            create_order_item(
+                db,
+                order_id=order.id,
+                product_id=product.id,
+                quantity=quantity,
+            )
+
+        db.commit()
+        db.refresh(order)
+    except HTTPException:
+        raise
+    except Exception:
+        db.rollback()
+        raise
 
     return order
