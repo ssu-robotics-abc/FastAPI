@@ -7,7 +7,7 @@ set -e
 cd "$(dirname "$0")"
 
 source /opt/ros/humble/setup.bash
-source /home/ssu/doosan_project/team_abc_ws/install/setup.bash
+source ~/team_abc_ws/install/setup.bash
 source .venv/bin/activate
 
 # 로봇 노드와 동일한 도메인이어야 통신됩니다.
