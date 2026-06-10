@@ -57,13 +57,7 @@ SQLite DB 파일은 `data/robot_orders.db`에 생성됩니다.
 FastAPI 개발 서버를 실행합니다.
 
 ```bash
-uv run fastapi dev app/main.py --host 0.0.0.0 --port 8000
-```
-
-또는 `uvicorn`으로 직접 실행할 수 있습니다.
-
-```bash
-uv run uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+./run.sh
 ```
 
 실행 후 브라우저에서 API 문서를 확인할 수 있습니다.
