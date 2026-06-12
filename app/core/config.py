@@ -16,7 +16,8 @@ class Settings(BaseSettings):
         "http://localhost:5173",
         "http://127.0.0.1:5173",
         "https://api-ssu-abc.ssammwu.info",
-        "https://ssu-abc-store-kiosk.ssammwu.info"
+        "https://ssu-abc-store-kiosk.ssammwu.info",
+        "https://ssu-abc-store-dashboard.ssammwu.info"
     ]
 
     model_config = SettingsConfigDict(
